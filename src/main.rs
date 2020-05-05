@@ -35,6 +35,13 @@ use gl::types::{GLfloat, GLint, GLuint, GLvoid, GLsizeiptr};
 use log::{info};
 
 
+const CLEAR_COLOR: [f32; 4] = [0.2_f32, 0.2_f32, 0.2_f32, 1.0_f32];
+
+// OpenGL extension constants.
+const GL_TEXTURE_MAX_ANISOTROPY_EXT: u32 = 0x84FE;
+const GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT: u32 = 0x84FF;
+
+
 /// Initialize the logger.
 fn init_logger(log_file: &str) {
     file_logger::init(log_file).expect("Failed to initialize logger.");
@@ -65,6 +72,10 @@ fn main() {
                 gl.window.set_should_close(true);
             }
             _ => {}
+        }
+
+        unsafe {
+            gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
         }
 
         gl.window.swap_buffers();

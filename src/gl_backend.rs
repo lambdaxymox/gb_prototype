@@ -230,7 +230,7 @@ pub fn start_gl(width: u32, height: u32) -> Result<GLState, String> {
 
     info!("Started GLFW successfully");
     let maybe_glfw_window = glfw.create_window(
-        width, height, &format!("Googly Blocks"), glfw::WindowMode::Windowed
+        width, height, &format!("GB_Prototype"), glfw::WindowMode::Windowed
     );
     let (mut window, events) = match maybe_glfw_window {
         Some(tuple) => tuple,
