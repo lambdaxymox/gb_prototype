@@ -21,6 +21,7 @@ extern crate toml;
 extern crate log;
 extern crate rand;
 extern crate file_logger;
+extern crate teximage2d;
 
 
 mod gl {
@@ -33,6 +34,7 @@ use gl_backend as glh;
 use glfw::{Action, Context, Key};
 use gl::types::{GLfloat, GLint, GLuint, GLvoid, GLsizeiptr};
 use log::{info};
+use teximage2d::TexImage2D;
 
 
 const CLEAR_COLOR: [f32; 4] = [0.2_f32, 0.2_f32, 0.2_f32, 1.0_f32];
@@ -59,6 +61,54 @@ fn init_gl(width: u32, height: u32) -> glh::GLState {
     gl_state
 }
 
+struct Mesh {
+    points: [[f32; 2]; 3],
+    tex_coords: [[f32; 2]; 3],
+}
+
+fn create_meshj_triangle(h: f32) -> Mesh {
+    let a = f32::sqrt(4_f32 * h * h / 3_f32);
+    let half_a = a / 2_f32;
+    let half_h = h / 2_f32;
+
+
+    let points = [
+        [-half_a, -half_h], [half_a, -half_h], [0_f32, half_h],
+    ];
+    let tex_coords = [
+        [0_f32, 0_f32], [1_f32, 0_f32], [0.5, 1_f32],
+    ];
+
+    Mesh {
+        points: points,
+        tex_coords: tex_coords,
+    }
+}
+
+#[derive(Copy, Clone)]
+struct ShaderSource {
+    vert_name: &'static str,
+    vert_source: &'static str,
+    frag_name: &'static str,
+    frag_source: &'static str,
+}
+
+fn create_shaders_triangle() -> ShaderSource {
+    let vert_source = include_str!("../shaders/triangle.vert.glsl");
+    let frag_source = include_str!("../shaders/triangle.frag.glsl");
+
+    ShaderSource { 
+        vert_name: "triangle.vert.glsl",
+        vert_source: vert_source,
+        frag_name: "triangle.frag.glsl",
+        frag_source: frag_source,
+    }
+}
+
+fn create_textures_triangle() -> TexImage2D {
+    let asset = include_bytes!("../assets/marble.png");
+    teximage2d::load_from_memory(asset).unwrap().image
+}
 
 fn main() {
     init_logger("gb_prototype.log");

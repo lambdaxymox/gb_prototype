@@ -14,6 +14,7 @@ toml = "0.4.8"
 rand = "0.7.3"
 file_logger = { git = "https://github.com/lambdaxymox/file-logger" }
 lean_cgmath = { git = "https://github.com/lambdaxymox/lean-cgmath" }
+teximage2d = { git = "https://github.com/lambdaxymox/teximage2d" }
 
 [build-dependencies]
 gl_generator = "0.14.0"
