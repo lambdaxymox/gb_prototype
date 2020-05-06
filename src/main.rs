@@ -36,7 +36,9 @@ use mesh::Mesh;
 
 use cgmath::{
     Array, 
-    Matrix4};
+    Matrix4,
+    One
+};
 use glfw::{
     Action, 
     Context, 
@@ -116,7 +118,7 @@ fn send_to_gpu_shaders(game: &mut glh::GLState, source: ShaderSource) -> GLuint 
     sp
 }
 
-fn create_meshj_triangle(h: f32) -> Mesh {
+fn create_mesh_triangle(h: f32) -> Mesh {
     let a = f32::sqrt(4_f32 * h * h / 3_f32);
     let half_a = a / 2_f32;
     let half_h = h / 2_f32;
@@ -150,7 +152,7 @@ fn create_textures_triangle() -> TexImage2D {
 }
 
 #[derive(Copy, Clone)]
-struct Buffers {
+struct Handle {
     vao: GLuint,
     v_pos_vbo: GLuint,
     v_tex_vbo: GLuint,
@@ -158,7 +160,7 @@ struct Buffers {
     v_tex_loc: GLuint,
 }
 
-fn create_buffers_triangle(sp: GLuint) -> Buffers {
+fn create_buffers_triangle(sp: GLuint) -> Handle {
     let v_pos_loc = unsafe {
         gl::GetAttribLocation(sp, glh::gl_str("v_pos").as_ptr())
     };
@@ -198,7 +200,7 @@ fn create_buffers_triangle(sp: GLuint) -> Buffers {
         gl::EnableVertexAttribArray(v_tex_loc);
     }
 
-    Buffers {
+    Handle {
         vao: vao,
         v_pos_vbo: v_pos_vbo,
         v_tex_vbo: v_tex_vbo,
@@ -207,7 +209,7 @@ fn create_buffers_triangle(sp: GLuint) -> Buffers {
     }
 }
 
-fn send_to_gpu_geometry_background(handle: Buffers, mesh: &Mesh) {
+fn send_to_gpu_geometry_triangle(handle: Handle, mesh: &Mesh) {
     unsafe {
         // Load position data.
         gl::BindBuffer(gl::ARRAY_BUFFER, handle.v_pos_vbo);
@@ -235,7 +237,7 @@ fn send_to_gpu_geometry_background(handle: Buffers, mesh: &Mesh) {
     }
 }
 
-fn send_to_gpu_uniforms(sp: GLuint, trans_mat: Matrix4, scale_mat: Matrix4) {
+fn send_to_gpu_uniforms_triangle(sp: GLuint, trans_mat: Matrix4, scale_mat: Matrix4) {
     let scale_mat_loc = unsafe {
         gl::GetUniformLocation(sp, glh::gl_str("scale_mat").as_ptr())
     };
@@ -273,7 +275,22 @@ fn main() {
     init_logger("gb_prototype.log");
     info!("BEGIN LOG");
     info!("build version: ??? ?? ???? ??:??:??");
+
+    // Load the components of the scene.
+    let shaders = create_shaders_triangle();
+    let mesh = create_mesh_triangle(1_f32);
+    let image = create_textures_triangle();
     let mut gl = init_gl(640, 480);
+
+    // Set them up on the GPU.
+    let sp = send_to_gpu_shaders(&mut gl, shaders);
+    let handle = create_buffers_triangle(sp);
+    send_to_gpu_geometry_triangle(handle, &mesh);
+    let tex = send_to_gpu_texture(&image, gl::CLAMP_TO_EDGE).unwrap();
+    let trans_mat = Matrix4::one();
+    let scale_mat = Matrix4::one();
+    send_to_gpu_uniforms_triangle(sp, trans_mat, scale_mat);
+
     while !gl.window.should_close() {
         gl.glfw.poll_events();
         match gl.window.get_key(Key::Escape) {
@@ -283,8 +300,10 @@ fn main() {
             _ => {}
         }
 
+        // Render the results.
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
+            gl::Viewport(0, 0, 640, 480);
         }
 
         gl.window.swap_buffers();
