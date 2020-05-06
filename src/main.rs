@@ -49,7 +49,9 @@ use gl::types::{
     GLint, 
     GLuint, 
     GLvoid, 
-    GLsizeiptr
+    GLsizeiptr,
+    GLsizei,
+    GLenum,
 };
 use log::{info};
 use teximage2d::TexImage2D;
@@ -287,6 +289,41 @@ fn main() {
         info!("{}", gl_backend::shader_info_log(sp));
     }
 
+    let mut num_active_attribs = 0;
+    let mut num_active_uniforms = 0;
+    unsafe {
+        gl::GetProgramiv(sp, gl::ACTIVE_ATTRIBUTES, &mut num_active_attribs);
+        gl::GetProgramiv(sp, gl::ACTIVE_UNIFORMS, &mut num_active_uniforms);
+    }
+    println!("num_active_attribsd = {}", num_active_attribs);
+    println!("num_active_uniforms = {}", num_active_uniforms);
+    let mut max_attrib_name_length = 0;
+    unsafe {
+        gl::GetProgramiv(sp, gl::ACTIVE_ATTRIBUTE_MAX_LENGTH, &mut max_attrib_name_length);
+    }
+    let mut name_data: Vec<i8> = vec![0; max_attrib_name_length as usize];
+    for attrib in 0..num_active_attribs {
+        let mut array_size: GLint = 0;
+        let mut typ: GLenum = 0;
+        let mut actual_length: GLsizei = 0;
+        unsafe {
+            gl::GetActiveAttrib(sp, attrib as u32, name_data.len() as i32, &mut actual_length, &mut array_size, &mut typ, &mut name_data[0]);
+        }
+        let name_data_ptr = unsafe { std::mem::transmute::<&Vec<i8>, &Vec<u8>>(&name_data) };
+        println!("{}", std::str::from_utf8(&name_data_ptr[0..actual_length as usize]).unwrap());
+    }
+
+    let mut name_data: Vec<i8> = vec![0; 256];
+    for uniform in 0..num_active_uniforms {
+        let mut array_size: GLint = 0;
+        let mut typ: GLenum = 0;
+        let mut actual_length: GLsizei = 0;
+        unsafe {
+            gl::GetActiveUniform(sp, uniform as u32, name_data.len() as i32, &mut actual_length, &mut array_size, &mut typ, &mut name_data[0]);
+        }
+        let name_data_ptr = unsafe { std::mem::transmute::<&Vec<i8>, &Vec<u8>>(&name_data) };
+        println!("{}", std::str::from_utf8(&name_data_ptr[0..actual_length as usize]).unwrap());
+    }
 
     let handle = create_buffers_triangle(sp);
     send_to_gpu_geometry_triangle(handle, &mesh);

@@ -1,3 +1,6 @@
+use gl_backend::GLState;
+
+
 /// Determine whether to create a uniform buffer or a general vertex storage buffer.
 enum BufferStorageType {
     Storage,
@@ -62,11 +65,6 @@ struct ShaderVariableIndex(u32);
 struct DescriptorSetIndex(u32);
 
 
-struct GLBufferIndex(GLuint);
-struct GLShaderIndex(GLuint);
-struct GLShaderVariableIndex(GLuint);
-
-
 enum Command {
     CompileShader,
     LoadBuffer,
@@ -106,16 +104,17 @@ struct DrawCommand {
 
 
 struct Renderer {
-    queue: VecDeque<Command>,
+    queue: Vec<Command>,
     shaders: HashMap<ShaderIndex, Shader>,
     buffers: HashMap<BufferIndex, Buffer>,
     bindings: HashMap<BufferIndex, EntryPoint>,
     descriptors: HashMap<DescriptorSetIndex, DescriptorSet>,
+    backend: RendererBackend,
 }
 
 impl Renderer {
     fn enqueue(&mut self, command: Command) {
-        self.queue.enqueue(command);
+        self.queue.push(command);
     }
 
     fn clear_command_queue(&mut self) {
@@ -123,11 +122,36 @@ impl Renderer {
     }
 
     fn render(&mut self) {
-        // Execute the command buffer.
-        // Clear on finish.
+        for command in self.queue.iter() {
+            match command {
+                Command::CompilerShader(c) => {
+                    self.backend.compile_shader()
+                }
+            }
+        }
     }
 }
 
+
+struct GLBufferIndex(GLuint);
+struct GLShaderIndex(GLuint);
+struct GLShaderVariableIndex(GLuint);
+
 struct RendererBackend {
+    context: glh::GLState,
+}
+
+impl RendererBackend {
+    fn compiler_shader(&mut self) -> GLShaderIndex {
+        let mut vert_reader = io::Cursor::new(source.vert_source);
+        let mut frag_reader = io::Cursor::new(source.frag_source);
+        let sp = gl_backend::create_program_from_reader(
+            &mut self.context,
+            &mut vert_reader, source.vert_name,
+            &mut frag_reader, source.frag_name
+        ).unwrap();
+        debug_assert!(sp > 0);
     
+        GLShaderIndex(sp)
+    }
 }
