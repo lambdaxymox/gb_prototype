@@ -239,11 +239,11 @@ fn send_to_gpu_geometry_triangle(handle: Handle, mesh: &Mesh) {
 
 fn send_to_gpu_uniforms_triangle(sp: GLuint, trans_mat: Matrix4, scale_mat: Matrix4) {
     let scale_mat_loc = unsafe {
-        gl::GetUniformLocation(sp, glh::gl_str("scale_mat").as_ptr())
+        gl::GetUniformLocation(sp, glh::gl_str("v_scale_mat").as_ptr())
     };
     debug_assert!(scale_mat_loc > -1);
     let trans_mat_loc = unsafe {
-        gl::GetUniformLocation(sp, glh::gl_str("trans_mat").as_ptr())
+        gl::GetUniformLocation(sp, glh::gl_str("v_trans_mat").as_ptr())
     };
     debug_assert!(trans_mat_loc > -1);
     unsafe {
@@ -284,6 +284,13 @@ fn main() {
 
     // Set them up on the GPU.
     let sp = send_to_gpu_shaders(&mut gl, shaders);
+    if !gl_backend::validate_shader_program(sp) {
+        info!("Got invalid shader program.");
+        info!("{}", gl_backend::program_info_log(sp));
+        info!("{}", gl_backend::shader_info_log(sp));
+    }
+
+
     let handle = create_buffers_triangle(sp);
     send_to_gpu_geometry_triangle(handle, &mesh);
     let tex = send_to_gpu_texture(&image, gl::CLAMP_TO_EDGE).unwrap();
@@ -300,10 +307,22 @@ fn main() {
             _ => {}
         }
 
-        // Render the results.
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
             gl::Viewport(0, 0, 640, 480);
+        }
+
+        // Update the GPU.
+        send_to_gpu_uniforms_triangle(sp, trans_mat, scale_mat);
+
+        // Render the results.
+        unsafe {
+            gl::UseProgram(sp);
+            gl::Disable(gl::DEPTH_TEST);
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_2D, tex);
+            gl::BindVertexArray(handle.vao);
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
 
         gl.window.swap_buffers();
