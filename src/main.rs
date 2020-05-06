@@ -57,9 +57,6 @@ use teximage2d::TexImage2D;
 use std::io;
 use std::ptr;
 
-
-const CLEAR_COLOR: [f32; 4] = [0.2_f32, 0.2_f32, 0.2_f32, 1.0_f32];
-
 // OpenGL extension constants.
 const GL_TEXTURE_MAX_ANISOTROPY_EXT: u32 = 0x84FE;
 const GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT: u32 = 0x84FF;
@@ -125,7 +122,7 @@ fn create_mesh_triangle(h: f32) -> Mesh {
 
 
     let points = [
-        [-half_a, -half_h], [half_a, -half_h], [0_f32, half_h],
+        [-half_a, -half_h, 0_f32], [half_a, -half_h, 0_f32], [0_f32, half_h, 0_f32],
     ];
     let tex_coords = [
         [0_f32, 0_f32], [1_f32, 0_f32], [0.5, 1_f32],
@@ -193,7 +190,7 @@ fn create_buffers_triangle(sp: GLuint) -> Handle {
     unsafe {
         gl::BindVertexArray(vao);
         gl::BindBuffer(gl::ARRAY_BUFFER, v_pos_vbo);
-        gl::VertexAttribPointer(v_pos_loc, 2, gl::FLOAT, gl::FALSE, 0, ptr::null());
+        gl::VertexAttribPointer(v_pos_loc, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
         gl::BindBuffer(gl::ARRAY_BUFFER, v_tex_vbo);
         gl::VertexAttribPointer(v_tex_loc, 2, gl::FLOAT, gl::FALSE, 0, ptr::null());
         gl::EnableVertexAttribArray(v_pos_loc);
@@ -229,7 +226,7 @@ fn send_to_gpu_geometry_triangle(handle: Handle, mesh: &Mesh) {
         // Enable the arrays for use by the shader.
         gl::BindVertexArray(handle.vao);
         gl::BindBuffer(gl::ARRAY_BUFFER, handle.v_pos_vbo);
-        gl::VertexAttribPointer(handle.v_pos_loc, 2, gl::FLOAT, gl::FALSE, 0, ptr::null());
+        gl::VertexAttribPointer(handle.v_pos_loc, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
         gl::BindBuffer(gl::ARRAY_BUFFER, handle.v_tex_vbo);
         gl::VertexAttribPointer(handle.v_tex_loc, 2, gl::FLOAT, gl::FALSE, 0, ptr::null());
         gl::EnableVertexAttribArray(handle.v_pos_loc);
@@ -308,7 +305,8 @@ fn main() {
         }
 
         unsafe {
-            gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            gl::ClearColor(0.3, 0.3, 0.3, 1.0);
             gl::Viewport(0, 0, 640, 480);
         }
 
@@ -318,7 +316,8 @@ fn main() {
         // Render the results.
         unsafe {
             gl::UseProgram(sp);
-            gl::Disable(gl::DEPTH_TEST);
+            gl::Enable(gl::DEPTH_TEST);
+            gl::DepthFunc(gl::LESS);
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, tex);
             gl::BindVertexArray(handle.vao);

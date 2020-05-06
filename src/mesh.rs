@@ -20,12 +20,12 @@ use std::mem;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Points {
-    inner: Vec<[f32; 2]>,
+    inner: Vec<[f32; 3]>,
 }
 
 impl Points {
     #[inline]
-    pub fn as_ptr(&self) -> *const [f32; 2] {
+    pub fn as_ptr(&self) -> *const [f32; 3] {
         self.inner.as_ptr()
     }
 
@@ -75,7 +75,7 @@ pub struct Mesh {
 
 impl Mesh {
     /// Generate a new mesh object.
-    pub fn new(points: &[[f32; 2]], tex_coords: &[[f32; 2]]) -> Mesh {
+    pub fn new(points: &[[f32; 3]], tex_coords: &[[f32; 2]]) -> Mesh {
         Mesh {
             points: Points { inner: points.iter().map(|e| *e).collect() },
             tex_coords: TextureCoordinates { inner: tex_coords.iter().map(|e| *e).collect() },
@@ -86,7 +86,7 @@ impl Mesh {
     /// to present the internal array buffer to OpenGL or another Graphics
     /// system for rendering.
     #[inline]
-    pub fn points(&self) -> &[[f32; 2]] {
+    pub fn points(&self) -> &[[f32; 3]] {
         &self.points.inner
     }
 
