@@ -34,8 +34,21 @@ mod mesh;
 use gl_backend as glh;
 use mesh::Mesh;
 
-use glfw::{Action, Context, Key};
-use gl::types::{GLfloat, GLint, GLuint, GLvoid, GLsizeiptr};
+use cgmath::{
+    Array, 
+    Matrix4};
+use glfw::{
+    Action, 
+    Context, 
+    Key
+};
+use gl::types::{
+    GLfloat, 
+    GLint, 
+    GLuint, 
+    GLvoid, 
+    GLsizeiptr
+};
 use log::{info};
 use teximage2d::TexImage2D;
 
@@ -222,6 +235,21 @@ fn send_to_gpu_geometry_background(handle: Buffers, mesh: &Mesh) {
     }
 }
 
+fn send_to_gpu_uniforms(sp: GLuint, trans_mat: Matrix4, scale_mat: Matrix4) {
+    let scale_mat_loc = unsafe {
+        gl::GetUniformLocation(sp, glh::gl_str("scale_mat").as_ptr())
+    };
+    debug_assert!(scale_mat_loc > -1);
+    let trans_mat_loc = unsafe {
+        gl::GetUniformLocation(sp, glh::gl_str("trans_mat").as_ptr())
+    };
+    debug_assert!(trans_mat_loc > -1);
+    unsafe {
+        gl::UseProgram(sp);
+        gl::UniformMatrix4fv(scale_mat_loc, 1, gl::FALSE, scale_mat.as_ptr());
+        gl::UniformMatrix4fv(trans_mat_loc, 1, gl::FALSE, trans_mat.as_ptr());
+    }
+}
 
 
 /// Initialize the logger.
