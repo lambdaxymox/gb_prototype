@@ -311,6 +311,8 @@ fn main() {
         }
         let name_data_ptr = unsafe { std::mem::transmute::<&Vec<i8>, &Vec<u8>>(&name_data) };
         println!("{}", std::str::from_utf8(&name_data_ptr[0..actual_length as usize]).unwrap());
+        println!("{}", typ);
+        println!("{}", array_size);
     }
 
     let mut name_data: Vec<i8> = vec![0; 256];
@@ -323,6 +325,9 @@ fn main() {
         }
         let name_data_ptr = unsafe { std::mem::transmute::<&Vec<i8>, &Vec<u8>>(&name_data) };
         println!("{}", std::str::from_utf8(&name_data_ptr[0..actual_length as usize]).unwrap());
+        println!("{}", typ);
+        println!("{}", gl::FLOAT_MAT4);
+        println!("{}", array_size);
     }
 
     let handle = create_buffers_triangle(sp);

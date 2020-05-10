@@ -24,7 +24,7 @@ struct EntryPoint {
 /// The association between a buffer slice and an input variable for a shader.
 struct BufferBinding {
     index: BufferIndex,
-    entry: EntryPoint
+    entry: EntryPoint,
 }
 
 /// A buffer consists of an index and a layout.
@@ -121,11 +121,15 @@ impl Renderer {
         self.queue.clear();
     }
 
+    fn compile_shader(&mut self, commmand: CompilerShaderCommand) ->  {
+        self.backend.compile_shader()
+    }
+
     fn render(&mut self) {
         for command in self.queue.iter() {
             match command {
                 Command::CompilerShader(c) => {
-                    self.backend.compile_shader()
+                    self.compile_shader(c)
                 }
             }
         }
@@ -136,13 +140,30 @@ impl Renderer {
 struct GLBufferIndex(GLuint);
 struct GLShaderIndex(GLuint);
 struct GLShaderVariableIndex(GLuint);
+struct GLShaderUniformIndex(GLuint);
+
+struct GLShader {
+    shader_index: GLShaderIndex,
+    attributes: HashMap<GLShaderVariableIndex, GLEntryPoint>,
+    uniforms: HashMap<GLShaderUniformIndex, GLUniformEntryPoint>,
+}
+
+struct GLEntryPoint {
+    name: String,
+    index: GLShaderVariableIndex,
+}
+
+struct GLUniformEntryPoint {
+    name: String,
+    index: GLShaderUniformIndex,
+}
 
 struct RendererBackend {
     context: glh::GLState,
 }
 
 impl RendererBackend {
-    fn compiler_shader(&mut self) -> GLShaderIndex {
+    fn compiler_shader(&mut self) -> GLShader {
         let mut vert_reader = io::Cursor::new(source.vert_source);
         let mut frag_reader = io::Cursor::new(source.frag_source);
         let sp = gl_backend::create_program_from_reader(
@@ -152,6 +173,17 @@ impl RendererBackend {
         ).unwrap();
         debug_assert!(sp > 0);
     
-        GLShaderIndex(sp)
+        let shader_index = GLShaderIndex(sp);
+
+        // loop through the attributes and index them.
+        let mut attributes = HashMap::new();
+        // loop thorugh the uniforms and index them.
+        let mut uniforms = HashMap::new();
+
+        GLShader {
+            shader_index: shader_index,
+            attributes: attributes,
+            uniforms: uniforms,
+        }
     }
 }
